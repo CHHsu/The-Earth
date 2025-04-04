@@ -410,6 +410,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Camera position
     camera.position.z = 15;
 
+    // Zoom limits
+    const minZoom = 8;
+    const maxZoom = 30;
+    const zoomSpeed = 0.1;
+
     // Mouse control
     let isMouseDown = false;
     let previousMousePosition = {
@@ -463,6 +468,22 @@ document.addEventListener('DOMContentLoaded', () => {
     container.addEventListener('mouseleave', () => {
         isMouseDown = false;
     });
+
+    // Mouse wheel zoom
+    container.addEventListener('wheel', (e) => {
+        e.preventDefault();
+        
+        // Determine zoom direction
+        const zoomDirection = e.deltaY > 0 ? -1 : 1;
+        
+        // Calculate new camera position
+        const newZ = camera.position.z + zoomDirection * zoomSpeed;
+        
+        // Apply zoom limits
+        if (newZ >= minZoom && newZ <= maxZoom) {
+            camera.position.z = newZ;
+        }
+    }, { passive: false });
 
     // Auto rotation
     let autoRotate = true;

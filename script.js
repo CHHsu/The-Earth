@@ -2,14 +2,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     const infoContent = document.getElementById('info-content');
     const container = document.getElementById('earth-container');
     const langToggle = document.getElementById('langToggle');
+    const showLatLongCheckbox = document.getElementById('showLatLong');
     let currentLang = 'zh';
     let currentRegion = null;
+    let latLongLines = null;
 
     // Language data
     const i18nData = {
         "zh": {
             "title": "地球各大洲與海洋",
             "clickToSeeDetails": "點擊地圖上的區域以查看詳細信息",
+            "features": "功能選項",
+            "showLatLong": "顯示經緯度線",
             "regions": {
                 "asia": "亞洲是世界上最大的洲，面積約4,500萬平方公里，佔地球陸地總面積的30%。",
                 "africa": "非洲是世界第二大洲，面積約3,000萬平方公里，擁有世界最大的沙漠——撒哈拉沙漠。",
@@ -28,6 +32,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         "en": {
             "title": "Earth's Continents and Oceans",
             "clickToSeeDetails": "Click on the map to see details",
+            "features": "Features",
+            "showLatLong": "Show Latitude and Longitude Lines",
             "regions": {
                 "asia": "Asia is the largest continent, covering about 45 million square kilometers, approximately 30% of Earth's total land area.",
                 "africa": "Africa is the second-largest continent, covering about 30 million square kilometers, home to the world's largest desert, the Sahara.",
@@ -131,6 +137,150 @@ document.addEventListener('DOMContentLoaded', async () => {
     const atmosphere = new THREE.Mesh(atmosphereGeometry, atmosphereMaterial);
     scene.add(atmosphere);
 
+    // Function to create latitude and longitude lines
+    function createLatLongLines() {
+        const group = new THREE.Group();
+        
+        // Create latitude lines (parallels)
+        for (let lat = -80; lat <= 80; lat += 20) {
+            const radius = 5.05;
+            const segments = 64;
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            
+            for (let i = 0; i <= segments; i++) {
+                const theta = (i / segments) * Math.PI * 2;
+                const phi = (90 - lat) * Math.PI / 180;
+                
+                const x = radius * Math.sin(phi) * Math.cos(theta);
+                const y = radius * Math.cos(phi);
+                const z = radius * Math.sin(phi) * Math.sin(theta);
+                
+                vertices.push(x, y, z);
+            }
+            
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            const material = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 });
+            const line = new THREE.Line(geometry, material);
+            group.add(line);
+
+            // Add latitude label
+            const labelGeometry = new THREE.PlaneGeometry(0.5, 0.5);
+            const labelMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.8,
+                side: THREE.DoubleSide
+            });
+            const label = new THREE.Mesh(labelGeometry, labelMaterial);
+            
+            // Position the label
+            const labelRadius = 5.3;
+            const labelPhi = (90 - lat) * Math.PI / 180;
+            label.position.set(
+                labelRadius * Math.sin(labelPhi) * Math.cos(0),
+                labelRadius * Math.cos(labelPhi),
+                labelRadius * Math.sin(labelPhi) * Math.sin(0)
+            );
+            
+            // Create canvas for text
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 64;
+            canvas.height = 64;
+            context.fillStyle = 'white';
+            context.font = '24px Arial';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText(`${lat}°`, 32, 32);
+            
+            // Create texture from canvas
+            const texture = new THREE.CanvasTexture(canvas);
+            labelMaterial.map = texture;
+            
+            group.add(label);
+        }
+        
+        // Create longitude lines (meridians)
+        for (let lon = 0; lon < 360; lon += 20) {
+            const radius = 5.05;
+            const segments = 64;
+            const geometry = new THREE.BufferGeometry();
+            const vertices = [];
+            
+            for (let i = 0; i <= segments; i++) {
+                const phi = (i / segments) * Math.PI;
+                const theta = lon * Math.PI / 180;
+                
+                const x = radius * Math.sin(phi) * Math.cos(theta);
+                const y = radius * Math.cos(phi);
+                const z = radius * Math.sin(phi) * Math.sin(theta);
+                
+                vertices.push(x, y, z);
+            }
+            
+            geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
+            const material = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.3 });
+            const line = new THREE.Line(geometry, material);
+            group.add(line);
+
+            // Add longitude label
+            const labelGeometry = new THREE.PlaneGeometry(0.5, 0.5);
+            const labelMaterial = new THREE.MeshBasicMaterial({
+                color: 0xffffff,
+                transparent: true,
+                opacity: 0.8,
+                side: THREE.DoubleSide
+            });
+            const label = new THREE.Mesh(labelGeometry, labelMaterial);
+            
+            // Position the label
+            const labelRadius = 5.3;
+            const labelPhi = Math.PI / 2;
+            const labelTheta = lon * Math.PI / 180;
+            label.position.set(
+                labelRadius * Math.sin(labelPhi) * Math.cos(labelTheta),
+                labelRadius * Math.cos(labelPhi),
+                labelRadius * Math.sin(labelPhi) * Math.sin(labelTheta)
+            );
+            
+            // Create canvas for text
+            const canvas = document.createElement('canvas');
+            const context = canvas.getContext('2d');
+            canvas.width = 64;
+            canvas.height = 64;
+            context.fillStyle = 'white';
+            context.font = '24px Arial';
+            context.textAlign = 'center';
+            context.textBaseline = 'middle';
+            context.fillText(`${lon}°`, 32, 32);
+            
+            // Create texture from canvas
+            const texture = new THREE.CanvasTexture(canvas);
+            labelMaterial.map = texture;
+            
+            group.add(label);
+        }
+        
+        return group;
+    }
+
+    // Toggle latitude and longitude lines
+    showLatLongCheckbox.addEventListener('change', () => {
+        if (showLatLongCheckbox.checked) {
+            if (!latLongLines) {
+                latLongLines = createLatLongLines();
+                scene.add(latLongLines);
+            } else {
+                scene.add(latLongLines);
+            }
+        } else {
+            if (latLongLines) {
+                scene.remove(latLongLines);
+            }
+        }
+    });
+
     // Lights
     const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
     scene.add(ambientLight);
@@ -169,6 +319,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         earth.rotation.x += deltaMove.y * 0.005;
         atmosphere.rotation.y = earth.rotation.y;
         atmosphere.rotation.x = earth.rotation.x;
+        
+        // Rotate lat/long lines with earth
+        if (latLongLines) {
+            latLongLines.rotation.y = earth.rotation.y;
+            latLongLines.rotation.x = earth.rotation.x;
+        }
 
         previousMousePosition = {
             x: e.clientX,
@@ -197,6 +353,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (autoRotate) {
             earth.rotation.y += 0.001;
             atmosphere.rotation.y = earth.rotation.y;
+            if (latLongLines) {
+                latLongLines.rotation.y = earth.rotation.y;
+            }
         }
 
         renderer.render(scene, camera);

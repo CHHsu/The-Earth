@@ -1,6 +1,34 @@
 document.addEventListener('DOMContentLoaded', () => {
     const infoContent = document.getElementById('info-content');
     const container = document.getElementById('earth-container');
+    const langToggle = document.getElementById('langToggle');
+    let currentLang = 'zh';
+
+    // Language switching functionality
+    langToggle.addEventListener('click', () => {
+        currentLang = currentLang === 'zh' ? 'en' : 'zh';
+        langToggle.textContent = currentLang === 'zh' ? 'EN' : 'ZH';
+        document.documentElement.lang = currentLang === 'zh' ? 'zh-TW' : 'en';
+        
+        // Update all elements with lang-text class
+        document.querySelectorAll('.lang-text').forEach(element => {
+            const newText = element.getAttribute(`data-${currentLang}`);
+            if (newText) {
+                element.textContent = newText;
+            }
+        });
+
+        // Update info content if it exists
+        if (infoContent.textContent) {
+            const region = Object.keys(regionInfo).find(key => 
+                regionInfo[key][currentLang] === infoContent.textContent ||
+                regionInfo[key][currentLang === 'zh' ? 'english' : 'chinese'] === infoContent.textContent
+            );
+            if (region) {
+                infoContent.textContent = regionInfo[region][currentLang];
+            }
+        }
+    });
 
     // Three.js setup
     const scene = new THREE.Scene();

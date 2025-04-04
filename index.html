@@ -8,12 +8,14 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
+    <div class="language-switcher">
+        <button id="langToggle">EN</button>
+    </div>
     <div class="container">
         <h1>地球各大洲與海洋 | Earth's Continents and Oceans</h1>
         <div id="earth-container"></div>
         <div class="info-panel">
-            <h2>點擊地圖上的區域以查看詳細信息</h2>
-            <h2>Click on the map to see details</h2>
+            <h2 class="lang-text" data-zh="點擊地圖上的區域以查看詳細信息" data-en="Click on the map to see details">點擊地圖上的區域以查看詳細信息</h2>
             <div id="info-content"></div>
         </div>
     </div>
